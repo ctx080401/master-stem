@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Agihan Beban & Analisis Keselamatan Struktur</title>
+    <style>
+        :root {
+            --bg-color: #0b132b;
+            --panel-bg: #1c2541;
+            --accent-blue: #00f0ff;
+            --accent-orange: #ff9f1c;
+            --accent-red: #ff0055;
+            --text-color: #edf2f4;
+            --text-dim: #8d99ae;
+            --grid-line: rgba(0, 240, 255, 0.08);
+            --border-color: #3a506b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            border-bottom: 2px solid var(--accent-blue);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            color: var(--accent-orange);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: var(--text-dim);
+        }
+
+        input {
+            width: 100%;
+            background: #0b132b;
+            border: 1px solid var(--border-color);
+            color: var(--accent-blue);
+            padding: 8px;
+            font-family: inherit;
+            border-radius: 2px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
+        }
+
+        button {
+            width: 100%;
+            background: var(--accent-blue);
+            color: #000;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #00b8c4;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+        }
+
+        .canvas-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .canvas-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            position: relative;
+        }
+
+        .canvas-label {
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        canvas {
+            width: 100%;
+            height: 140px;
+            background: #080d1a;
+            display: block;
+            border: 1px solid #14213d;
+        }
+
+        .readouts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .metric-box {
+            background: #0b132b;
+            border-left: 3px solid var(--accent-blue);
+            padding: 8px 12px;
+        }
+
+        .metric-title {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+            color: #fff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>[ SIMULASI STRUCTURAL ANALYSIS v1.0 ]</h1>
+            <div class="subtitle">Modul Analisis Agihan Beban Rasuk & Keselamatan Kejuruteraan Awam/Mekanikal</div>
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <div class="panel">
+            <div class="panel-title">// Parameter Input Rasuk</div>
+            
+            <div class="form-group">
+                <label for="length">Panjang Rasuk, L (m):</label>
+                <input type="number" id="length" value="10" step="0.5" min="1" oninput="calculateAndDraw()">
+            </div>
+
+            <div class="form-group">
+                <label for="pointLoad">Titik Beban, P (kN):</label>
+                <input type="number" id="pointLoad" value="20" step="1" min="0" oninput="calculateAndDraw()">
+            </div>
+
+            <div class="form-group">
+                <label for="pointPos">Kedudukan Titik Beban, a (m):</label>
+                <input type="number" id="pointPos" value="4" step="0.5" min="0" oninput="calculateAndDraw()">
+            </div>
+
+            <div class="form-group">
+                <label for="udl">Beban Teragih Seragam, w (kN/m):</label>
+                <input type="number" id="udl" value="5" step="0.5" min="0" oninput="calculateAndDraw()">
+            </div>
+
+            <div class="panel-title" style="margin-top: 20px;">// Had Keselamatan Material</div>
+
+            <div class="form-group">
+                <label for="maxMomentCapacity">Kapasiti Momen Benar, M_cap (kNm):</label>
+                <input type="number" id="maxMomentCapacity" value="120" step="5" min="1" oninput="calculateAndDraw()">
+            </div>
+
+            <button onclick="calculateAndDraw()">Kemaskini Analisis</button>
+
+            <div class="readouts">
+                <div class="metric-box">
+                    <div class="metric-title">Tindak Balas R<sub>A</sub></div>
+                    <div class="metric-value" id="ra-val">0 kN</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-title">Tindak Balas R<sub>B</sub></div>
+                    <div class="metric-value" id="rb-val">0 kN</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-title">Daya Pemotong Maks (V<sub>max</sub>)</div>
+                    <div class="metric-value" id="vmax-val">0 kN</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-title">Momen Lentur Maks (M<sub>max</sub>)</div>
+                    <div class="metric-value" id="mmax-val">0 kNm</div>
+                </div>
+                <div class="metric-box" style="border-color: var(--accent-orange);">
+                    <div class="metric-title">Faktor Keselamatan (FoS)</div>
+                    <div class="metric-value" id="fos-val">0.0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <div class="canvas-card">
+                <div class="canvas-label">1. Skematik Rasuk & Agihan Beban (Free Body Diagram)</div>
+                <canvas id="beamCanvas"></canvas>
+            </div>
+
+            <div class="canvas-card">
+                <div class="canvas-label">2. Rajah Daya Pemotong (Shear Force Diagram - SFD)</div>
+                <canvas id="sfdCanvas"></canvas>
+            </div>
+
+            <div class="canvas-card">
+                <div class="canvas-label">3. Rajah Momen Lentur (Bending Moment Diagram - BMD)</div>
+                <canvas id="bmdCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setupCanvas(id) {
+            const canvas = document.getElementById(id);
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            return { ctx, width: rect.width, height: rect.height };
+        }
+
+        function calculateAndDraw() {
+            let L = parseFloat(document.getElementById('length').value) || 1;
+            let P = parseFloat(document.getElementById('pointLoad').value) || 0;
+            let a = parseFloat(document.getElementById('pointPos').value) || 0;
+            let w = parseFloat(document.getElementById('udl').value) || 0;
+            let M_cap = parseFloat(document.getElementById('maxMomentCapacity').value) || 1;
+
+            // Kawalan sempadan kedudukan titik beban
+            if (a > L) {
+                a = L;
+                document.getElementById('pointPos').value = L;
+            }
+
+            // 1. Pengiraan Imbangan Statik
+            const Ra = (P * (L - a) + w * L * (L / 2)) / L;
+            const Rb = (P + w * L) - Ra;
+
+            // Plot titik tepat untuk SFD dan BMD
+            let points = [];
+            const steps = 200;
+            const dx = L / steps;
+
+            for (let i = 0; i <= steps; i++) {
+                let x = i * dx;
+                
+                // Tambah titik secara eksplisit tepat sebelum & selepas beban P untuk lukisan SFD tepat (vertical drop)
+                if (i > 0 && (i * dx > a) && ((i - 1) * dx < a)) {
+                    points.push(a - 0.0001);
+                    points.push(a + 0.0001);
+                }
+                points.push(x);
+            }
+
+            let xValues = [];
+            let VValues = [];
+            let MValues = [];
+            let maxV = 0;
+            let maxM = 0;
+
+            for (let x of points) {
+                xValues.push(x);
+
+                // Daya Pemotong V(x)
+                let V = Ra - (w * x);
+                if (x >= a) V -= P;
+                VValues.push(V);
+                if (Math.abs(V) > maxV) maxV = Math.abs(V);
+
+                // Momen Lentur M(x)
+                let M = (Ra * x) - (w * x * (x / 2));
+                if (x >= a) M -= P * (x - a);
+                MValues.push(M);
+                if (Math.abs(M) > maxM) maxM = Math.abs(M);
+            }
+
+            const FoS = maxM > 0 ? (M_cap / maxM).toFixed(2) : "N/A";
+
+            // Kemaskini Paparan UI
+            document.getElementById('ra-val').innerText = Ra.toFixed(2) + ' kN';
+            document.getElementById('rb-val').innerText = Rb.toFixed(2) + ' kN';
+            document.getElementById('vmax-val').innerText = maxV.toFixed(2) + ' kN';
+            document.getElementById('mmax-val').innerText = maxM.toFixed(2) + ' kNm';
+            
+            const fosElem = document.getElementById('fos-val');
+            fosElem.innerText = FoS;
+            if (FoS < 1.0) {
+                fosElem.style.color = 'var(--accent-red)';
+            } else if (FoS < 1.5) {
+                fosElem.style.color = 'var(--accent-orange)';
+            } else {
+                fosElem.style.color = 'var(--accent-blue)';
+            }
+
+            // Lukis Diagram
+            drawBeamDiagram(L, P, a, w, Ra, Rb);
+            drawSFD(xValues, VValues, maxV);
+            drawBMD(xValues, MValues, maxM);
+        }
+
+        function drawBeamDiagram(L, P, a, w, Ra, Rb) {
+            const { ctx, width: wWidth, height: wHeight } = setupCanvas('beamCanvas');
+            const margin = 50;
+            const beamY = wHeight / 2 + 10;
+            const scaleX = (wWidth - 2 * margin) / L;
+
+            ctx.clearRect(0, 0, wWidth, wHeight);
+
+            // Lukis Rasuk (Beam)
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(margin, beamY);
+            ctx.lineTo(wWidth - margin, beamY);
+            ctx.stroke();
+
+            // Lukis Penyangga (Supports)
+            ctx.fillStyle = '#ff9f1c';
+            // Pin Support A
+            ctx.beginPath();
+            ctx.moveTo(margin, beamY);
+            ctx.lineTo(margin - 10, beamY + 15);
+            ctx.lineTo(margin + 10, beamY + 15);
+            ctx.closePath();
+            ctx.fill();
+
+            // Roller Support B
+            ctx.beginPath();
+            ctx.arc(wWidth - margin, beamY + 8, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Lukis UDL
+            if (w > 0) {
+                ctx.strokeStyle = '#ff0055';
+                ctx.fillStyle = 'rgba(255, 0, 85, 0.15)';
+                ctx.lineWidth = 1;
+                const udlHeight = 25;
+                ctx.fillRect(margin, beamY - udlHeight, wWidth - 2 * margin, udlHeight);
+                
+                for (let x = margin; x <= wWidth - margin; x += 15) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, beamY - udlHeight);
+                    ctx.lineTo(x, beamY);
+                    ctx.stroke();
+                }
+                ctx.fillStyle = '#ff0055';
+                ctx.font = '11px Consolas';
+                ctx.fillText(`w = ${w} kN/m`, wWidth / 2 - 35, beamY - udlHeight - 5);
+            }
+
+            // Lukis Titik Beban (Point Load)
+            if (P > 0) {
+                const px = margin + a * scaleX;
+                ctx.strokeStyle = '#ff0055';
+                ctx.fillStyle = '#ff0055';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(px, beamY - 40);
+                ctx.lineTo(px, beamY);
+                ctx.stroke();
+                
+                // Kepala Anak Panah
+                ctx.beginPath();
+                ctx.moveTo(px - 5, beamY - 10);
+                ctx.lineTo(px, beamY);
+                ctx.lineTo(px + 5, beamY - 10);
+                ctx.fill();
+
+                ctx.font = '11px Consolas';
+                ctx.fillText(`P = ${P} kN`, px - 20, beamY - 45);
+            }
+        }
+
+        function drawSFD(xVals, VVals, maxV) {
+            const { ctx, width: wWidth, height: wHeight } = setupCanvas('sfdCanvas');
+            const margin = 50;
+            const zeroY = wHeight / 2;
+            const scaleX = (wWidth - 2 * margin) / xVals[xVals.length - 1];
+            const scaleY = maxV !== 0 ? (wHeight / 2 - 20) / maxV : 1;
+
+            ctx.clearRect(0, 0, wWidth, wHeight);
+
+            // Garis Asas (Baseline)
+            ctx.strokeStyle = '#3a506b';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(margin, zeroY);
+            ctx.lineTo(wWidth - margin, zeroY);
+            ctx.stroke();
+
+            // Plot Lengkung SFD
+            ctx.beginPath();
+            ctx.moveTo(margin, zeroY);
+            for (let i = 0; i < xVals.length; i++) {
+                const cx = margin + xVals[i] * scaleX;
+                const cy = zeroY - (VVals[i] * scaleY);
+                ctx.lineTo(cx, cy);
+            }
+            ctx.lineTo(wWidth - margin, zeroY);
+            ctx.closePath();
+
+            ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
+            ctx.fill();
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function drawBMD(xVals, MVals, maxM) {
+            const { ctx, width: wWidth, height: wHeight } = setupCanvas('bmdCanvas');
+            const margin = 50;
+            const zeroY = 25; 
+            const scaleX = (wWidth - 2 * margin) / xVals[xVals.length - 1];
+            const scaleY = maxM !== 0 ? (wHeight - 45) / maxM : 1;
+
+            ctx.clearRect(0, 0, wWidth, wHeight);
+
+            // Garis Asas (Baseline)
+            ctx.strokeStyle = '#3a506b';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(margin, zeroY);
+            ctx.lineTo(wWidth - margin, zeroY);
+            ctx.stroke();
+
+            // Plot Lengkung BMD
+            ctx.beginPath();
+            ctx.moveTo(margin, zeroY);
+            for (let i = 0; i < xVals.length; i++) {
+                const cx = margin + xVals[i] * scaleX;
+                const cy = zeroY + (MVals[i] * scaleY);
+                ctx.lineTo(cx, cy);
+            }
+            ctx.lineTo(wWidth - margin, zeroY);
+            ctx.closePath();
+
+            ctx.fillStyle = 'rgba(255, 159, 28, 0.15)';
+            ctx.fill();
+            ctx.strokeStyle = '#ff9f1c';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        window.onload = calculateAndDraw;
+        window.onresize = calculateAndDraw;
+    </script>
+</body>
+</html>

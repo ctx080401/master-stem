@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Kuantum: Prinsip Ketidakpastian Heisenberg</title>
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-canvas: #ffffff;
+            --bg-metric: #f1f5f9;
+            --border: #e2e8f0;
+            --border-focus: #cbd5e1;
+            
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-sub: #475569;
+
+            --cyan-accent: #0284c7;
+            --pink-accent: #e11d48;
+            --purple-accent: #7c3aed;
+            --emerald-accent: #059669;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-canvas: #090d16;
+            --bg-metric: #182234;
+            --border: #334155;
+            --border-focus: #475569;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-sub: #cbd5e1;
+
+            --cyan-accent: #38bdf8;
+            --pink-accent: #fb7185;
+            --purple-accent: #a78bfa;
+            --emerald-accent: #34d399;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            text-align: center;
+            max-width: 700px;
+            margin-bottom: 24px;
+            position: relative;
+            width: 100%;
+        }
+
+        header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--border-focus);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1180px;
+        }
+
+        @media (max-width: 900px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            .theme-toggle {
+                position: static;
+                margin: 12px auto 0 auto;
+            }
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(8px);
+        }
+
+        .controls-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .sidebar-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .preset-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .btn-preset {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-metric);
+            color: var(--text-sub);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-preset:hover {
+            border-color: var(--cyan-accent);
+            color: var(--cyan-accent);
+            transform: translateY(-1px);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-group label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-group label .val {
+            color: var(--cyan-accent);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--cyan-accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-card);
+            box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 9px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: var(--bg-metric);
+            border-color: var(--border-focus);
+        }
+
+        .btn.active {
+            background: var(--text-main);
+            color: var(--bg-card);
+            border-color: var(--text-main);
+        }
+
+        .btn-measure {
+            grid-column: span 2;
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--emerald-accent);
+            border-color: rgba(5, 150, 105, 0.3);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(5, 150, 105, 0.3); }
+            50% { border-color: var(--emerald-accent); }
+        }
+
+        .btn-measure:hover {
+            background: rgba(5, 150, 105, 0.2);
+        }
+
+        .metric-box {
+            background: var(--bg-metric);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-left: 3px solid var(--cyan-accent);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-sub);
+        }
+
+        .metric-value {
+            font-weight: 600;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: var(--text-main);
+        }
+
+        .info-note {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            background: rgba(2, 132, 199, 0.08);
+            border: 1px solid rgba(2, 132, 199, 0.2);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .info-note strong {
+            color: var(--cyan-accent);
+        }
+
+        .visualization-area {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        canvas {
+            width: 100%;
+            height: 500px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(15, 23, 42, 0.85);
+            color: #ffffff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            display: none;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .phase-spectrum {
+            width: 40px;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #0284c7, #e11d48, #7c3aed, #0284c7);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="theme-toggle" id="btn-theme" aria-label="Tukar Tema Mod Gelang/Terang">
+            <span id="theme-icon">🌙</span> <span id="theme-text">Mod Gelap</span>
+        </button>
+        <h1>Prinsip Ketidakpastian Heisenberg</h1>
+        <p>Simulasi Interaktif Masa Nyata Paket Gelombang Kuantum & Pengukuran Zarah</p>
+    </header>
+
+    <main class="main-layout">
+        <aside class="card controls-sidebar">
+            <h2 class="sidebar-title">Pemboleh Ubah Masukan</h2>
+
+            <fieldset class="control-group" style="border:none;">
+                <legend class="sr-only" style="display:none;">Praset Situasi</legend>
+                <label>Praset Situasi Kuantum:</label>
+                <div class="preset-container">
+                    <button type="button" class="btn-preset" onclick="applyPreset(0.2, 12, 1.0)">Terlokaliti (&Delta;p Besar)</button>
+                    <button type="button" class="btn-preset" onclick="applyPreset(1.2, 8, 1.0)">Delokaliti (&Delta;x Besar)</button>
+                    <button type="button" class="btn-preset" onclick="applyPreset(0.5, 20, 0.5)">Elektron Pantas</button>
+                </div>
+            </fieldset>
+
+            <div class="control-group">
+                <label for="input-dx">Ketidakpastian Kedudukan (&Delta;x): <span class="val" id="val-dx">0.50 nm</span></label>
+                <input type="range" id="input-dx" min="0.10" max="1.50" step="0.05" value="0.50">
+            </div>
+
+            <div class="control-group">
+                <label for="input-k0">Nombor Gelombang Utama (k<sub>0</sub>): <span class="val" id="val-k0">10.0 rad/nm</span></label>
+                <input type="range" id="input-k0" min="0.0" max="25.0" step="0.5" value="10.0">
+            </div>
+
+            <div class="control-group">
+                <label for="input-m">Jisim Zarah (m): <span class="val" id="val-m">1.0 m<sub>e</sub></span></label>
+                <input type="range" id="input-m" min="0.2" max="3.0" step="0.1" value="1.0">
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="btn active" id="btn-play">Jeda Animasi</button>
+                <button type="button" class="btn" id="btn-reset">Set Semula Masa</button>
+                <button type="button" class="btn btn-measure" id="btn-measure">⚡ Ukur Kedudukan Zarah</button>
+            </div>
+
+            <section class="metric-box" aria-live="polite">
+                <div class="metric-row">
+                    <span>Ketidakpastian Momentum (&Delta;p):</span>
+                    <span class="metric-value" id="val-dp">0.00 kg&middot;m/s</span>
+                </div>
+                <div class="metric-row">
+                    <span>Hasil Darab &Delta;x &middot; &Delta;p:</span>
+                    <span class="metric-value" id="val-prod">0.50 &#295;</span>
+                </div>
+                <div class="metric-row">
+                    <span>Panjang Gelombang De Broglie (&lambda;<sub>0</sub>):</span>
+                    <span class="metric-value" id="val-lambda">0.63 nm</span>
+                </div>
+                <div class="metric-row">
+                    <span>Bilangan Pengukuran Zarah:</span>
+                    <span class="metric-value" id="val-hits">0</span>
+                </div>
+                <div class="metric-row">
+                    <span>Masa Berlalu (t):</span>
+                    <span class="metric-value" id="val-time">0.00 fs</span>
+                </div>
+            </section>
+
+            <div class="info-note">
+                <strong>Panduan Interaktif:</strong><br>
+                &bull; Klik & seret kanvas untuk memindahkan pusat paket gelombang (x<sub>0</sub>).<br>
+                &bull; Tekan <strong>⚡ Ukur Kedudukan Zarah</strong> untuk simulasi keruntuhan gelombang mengikut Aturan Born.
+            </div>
+        </aside>
+
+        <section class="card visualization-area">
+            <div class="canvas-wrapper">
+                <canvas id="quantumCanvas" aria-label="Graf Simulasi Gelombang Kuantum Masa Nyata"></canvas>
+                <div class="tooltip" id="tooltip"></div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--cyan-accent);"></div>
+                    <span>Gelombang Nyata Re[&Psi;]</span>
+                </div>
+                <div class="legend-item">
+                    <div class="phase-spectrum"></div>
+                    <span>Fasa Kuantum &theta;</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--pink-accent);"></div>
+                    <span>Kebarangkalian |&Psi;|&sup2;</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--emerald-accent);"></div>
+                    <span>Titisan Pengukuran</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--purple-accent);"></div>
+                    <span>Taburan Momentum |\u03C6(p)|&sup2;</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const hbar = 1.0545718e-34;
+        const me = 9.109383e-31;
+
+        const inputDx = document.getElementById('input-dx');
+        const inputK0 = document.getElementById('input-k0');
+        const inputM = document.getElementById('input-m');
+
+        const valDx = document.getElementById('val-dx');
+        const valK0 = document.getElementById('val-k0');
+        const valM = document.getElementById('val-m');
+        
+        const valDp = document.getElementById('val-dp');
+        const valProd = document.getElementById('val-prod');
+        const valLambda = document.getElementById('val-lambda');
+        const valHits = document.getElementById('val-hits');
+        const valTime = document.getElementById('val-time');
+
+        const btnPlay = document.getElementById('btn-play');
+        const btnReset = document.getElementById('btn-reset');
+        const btnMeasure = document.getElementById('btn-measure');
+        const btnTheme = document.getElementById('btn-theme');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+
+        const canvas = document.getElementById('quantumCanvas');
+        const tooltip = document.getElementById('tooltip');
+        const ctx = canvas.getContext('2d');
+
+        let isAnimating = true;
+        let simTime = 0;
+        let x0_offset = 0;
+        let measuredParticles = [];
+        let isDragging = false;
+        let isDarkMode = false;
+
+        btnTheme.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Mod Terang';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Mod Gelap';
+            }
+        });
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function applyPreset(dx, k0, m) {
+            inputDx.value = dx;
+            inputK0.value = k0;
+            inputM.value = m;
+            simTime = 0;
+            x0_offset = 0;
+            measuredParticles = [];
+        }
+
+        btnPlay.addEventListener('click', () => {
+            isAnimating = !isAnimating;
+            btnPlay.textContent = isAnimating ? 'Jeda Animasi' : 'Main Animasi';
+            btnPlay.classList.toggle('active', isAnimating);
+        });
+
+        btnReset.addEventListener('click', () => {
+            simTime = 0;
+            x0_offset = 0;
+            measuredParticles = [];
+        });
+
+        btnMeasure.addEventListener('click', performQuantumMeasurement);
+
+        function performQuantumMeasurement() {
+            const dx_nm = parseFloat(inputDx.value);
+            const k0_nm = parseFloat(inputK0.value);
+            const m_ratio = parseFloat(inputM.value);
+
+            const dx0 = dx_nm * 1e-9;
+            const m = m_ratio * me;
+            const dispersionFactor = 1 + Math.pow((hbar * simTime) / (2 * m * dx0 * dx0), 2);
+            const dx_t_nm = dx_nm * Math.sqrt(dispersionFactor);
+
+            const vg_nm_fs = (hbar * (k0_nm * 1e9) / m) * 1e-6;
+            const current_x0 = x0_offset + vg_nm_fs * (simTime * 1e15);
+
+            let sampledX = 0;
+            let accepted = false;
+            let attempts = 0;
+
+            while (!accepted && attempts < 500) {
+                const testX = current_x0 + (Math.random() - 0.5) * 8 * dx_t_nm;
+                const probDensity = Math.exp(-Math.pow(testX - current_x0, 2) / (2 * dx_t_nm * dx_t_nm));
+                
+                if (Math.random() < probDensity) {
+                    sampledX = testX;
+                    accepted = true;
+                }
+                attempts++;
+            }
+
+            if (accepted) {
+                measuredParticles.push(sampledX);
+                if (measuredParticles.length > 300) measuredParticles.shift();
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            updatePositionFromMouse(e);
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            if (isDragging) {
+                updatePositionFromMouse(e);
+            }
+
+            const pad = { left: 50, right: 30 };
+            const plotW = rect.width - pad.left - pad.right;
+            if (mouseX >= pad.left && mouseX <= rect.width - pad.right) {
+                const x_nm = ((mouseX - pad.left) / plotW - 0.5) * 6.0;
+                
+                tooltip.style.display = 'block';
+                tooltip.style.left = `${mouseX + 12}px`;
+                tooltip.style.top = `${mouseY - 25}px`;
+                tooltip.innerHTML = `x: ${x_nm.toFixed(2)} nm`;
+            } else {
+                tooltip.style.display = 'none';
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+            isDragging = false;
+        });
+
+        function updatePositionFromMouse(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const pad = { left: 50, right: 30 };
+            const plotW = rect.width - pad.left - pad.right;
+            if (plotW <= 0) return;
+            
+            const x_click = ((mouseX - pad.left) / plotW - 0.5) * 6.0;
+            const k0_nm = parseFloat(inputK0.value);
+            const m_ratio = parseFloat(inputM.value);
+            const vg_nm_fs = (hbar * (k0_nm * 1e9) / (m_ratio * me)) * 1e-6;
+            
+            x0_offset = x_click - vg_nm_fs * (simTime * 1e15);
+        }
+
+        function render() {
+            const rect = canvas.getBoundingClientRect();
+            const W = rect.width;
+            const H = rect.height;
+
+            if (W === 0 || H === 0) {
+                requestAnimationFrame(render);
+                return;
+            }
+
+            const dx_nm = parseFloat(inputDx.value);
+            const k0_nm = parseFloat(inputK0.value);
+            const m_ratio = parseFloat(inputM.value);
+
+            const dx0 = dx_nm * 1e-9;
+            const k0 = k0_nm * 1e9;
+            const m = m_ratio * me;
+
+            const dispersionFactor = 1 + Math.pow((hbar * simTime) / (2 * m * dx0 * dx0), 2);
+            const dx_t_nm = dx_nm * Math.sqrt(dispersionFactor);
+
+            const dp = hbar / (2 * dx0);
+            const lambda_nm = k0_nm > 0 ? (2 * Math.PI / k0_nm) : Infinity;
+
+            const vg_m_s = (hbar * k0) / m;
+            const vg_nm_fs = vg_m_s * 1e-6;
+            const current_x0_nm = x0_offset + vg_nm_fs * (simTime * 1e15);
+
+            valDx.textContent = `${dx_nm.toFixed(2)} nm`;
+            valK0.textContent = `${k0_nm.toFixed(1)} rad/nm`;
+            valM.innerHTML = `${m_ratio.toFixed(1)} m<sub>e</sub>`;
+
+            valDp.textContent = `${dp.toExponential(2)} kg·m/s`;
+            valProd.innerHTML = `${((dx0 * dp) / hbar).toFixed(2)} &#295;`;
+            valLambda.textContent = k0_nm > 0 ? `${lambda_nm.toFixed(2)} nm` : '∞';
+            valHits.textContent = measuredParticles.length;
+            valTime.textContent = `${(simTime * 1e15).toFixed(1)} fs`;
+
+            ctx.clearRect(0, 0, W, H);
+
+            const pad = { top: 32, bottom: 36, left: 50, right: 30 };
+            const subHeight = (H - pad.top - pad.bottom - 40) / 2;
+            const plotW = W - pad.left - pad.right;
+            const xRange_nm = 6.0;
+
+            const textColor = isDarkMode ? '#f8fafc' : '#0f172a';
+            const gridColor = isDarkMode ? '#334155' : '#e2e8f0';
+            const mutedText = isDarkMode ? '#94a3b8' : '#64748b';
+
+            // --- GRAF 1: RUANG KEDUDUKAN ---
+            const topY0 = pad.top + subHeight / 2;
+
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, topY0);
+            ctx.lineTo(W - pad.right, topY0);
+            ctx.stroke();
+
+            ctx.fillStyle = textColor;
+            ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.fillText("1. Ruang Kedudukan: Gelombang Kuantum \u03A8(x, t) & Born Rule", pad.left, pad.top - 10);
+
+            ctx.beginPath();
+            ctx.moveTo(pad.left, topY0);
+
+            for (let px = 0; px <= plotW; px++) {
+                const x_nm = ((px / plotW) - 0.5) * xRange_nm;
+                const dist_nm = x_nm - current_x0_nm;
+                const prob = Math.exp(-Math.pow(dist_nm, 2) / (2 * dx_t_nm * dx_t_nm));
+                const py = topY0 - (prob * (subHeight * 0.42));
+
+                ctx.lineTo(pad.left + px, py);
+            }
+            ctx.lineTo(W - pad.right, topY0);
+            ctx.closePath();
+            ctx.fillStyle = isDarkMode ? 'rgba(251, 113, 133, 0.18)' : 'rgba(225, 29, 72, 0.12)';
+            ctx.fill();
+            ctx.strokeStyle = isDarkMode ? '#fb7185' : '#e11d48';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            for (let px = 0; px < plotW; px++) {
+                const x_nm = ((px / plotW) - 0.5) * xRange_nm;
+                const dist_nm = x_nm - current_x0_nm;
+
+                const gaussianAmp = Math.exp(-Math.pow(dist_nm, 2) / (4 * dx_t_nm * dx_t_nm));
+                const omega = (hbar * k0 * k0) / (2 * m);
+                const phase = (k0_nm * x_nm) - (omega * simTime * 1e-9);
+                const realPsi = gaussianAmp * Math.cos(phase);
+
+                const py1 = topY0 - (realPsi * (subHeight * 0.42));
+
+                const nextX_nm = (((px + 1) / plotW) - 0.5) * xRange_nm;
+                const nextDist_nm = nextX_nm - current_x0_nm;
+                const nextAmp = Math.exp(-Math.pow(nextDist_nm, 2) / (4 * dx_t_nm * dx_t_nm));
+                const nextPhase = (k0_nm * nextX_nm) - (omega * simTime * 1e-9);
+                const nextRealPsi = nextAmp * Math.cos(nextPhase);
+                const py2 = topY0 - (nextRealPsi * (subHeight * 0.42));
+
+                const rawHue = (phase % (2 * Math.PI)) * (180 / Math.PI);
+                const hue = (rawHue < 0 ? rawHue + 360 : rawHue) % 360;
+                
+                ctx.beginPath();
+                ctx.moveTo(pad.left + px, py1);
+                ctx.lineTo(pad.left + px + 1, py2);
+                ctx.strokeStyle = `hsl(${hue}, 85%, ${isDarkMode ? '60%' : '45%'})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            measuredParticles.forEach(ptX => {
+                const px = pad.left + ((ptX / xRange_nm) + 0.5) * plotW;
+                if (px >= pad.left && px <= W - pad.right) {
+                    ctx.beginPath();
+                    ctx.arc(px, topY0 + 2, 3.5, 0, 2 * Math.PI);
+                    ctx.fillStyle = isDarkMode ? 'rgba(52, 211, 153, 0.85)' : 'rgba(5, 150, 105, 0.7)';
+                    ctx.fill();
+                    ctx.strokeStyle = isDarkMode ? '#6ee7b7' : '#047857';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            });
+
+            // --- GRAF 2: RUANG MOMENTUM ---
+            const botCenterY = pad.top + subHeight + 46 + subHeight / 2;
+
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, botCenterY);
+            ctx.lineTo(W - pad.right, botCenterY);
+            ctx.stroke();
+
+            ctx.fillStyle = textColor;
+            ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.fillText("2. Ruang Momentum (Transformasi Fourier): |\u03C6(p)|\u00B2", pad.left, pad.top + subHeight + 30);
+
+            const kRange = 40.0;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, botCenterY);
+
+            for (let px = 0; px <= plotW; px++) {
+                const k_val = (px / plotW) * kRange;
+                const dk = (k_val - k0_nm);
+                const sigma_k = 1 / (2 * dx_nm);
+                
+                const probP = Math.exp(-Math.pow(dk, 2) / (2 * sigma_k * sigma_k));
+                const py = botCenterY - (probP * (subHeight * 0.42));
+
+                ctx.lineTo(pad.left + px, py);
+            }
+
+            ctx.lineTo(W - pad.right, botCenterY);
+            ctx.closePath();
+            ctx.fillStyle = isDarkMode ? 'rgba(167, 139, 250, 0.18)' : 'rgba(124, 58, 237, 0.12)';
+            ctx.fill();
+            ctx.strokeStyle = isDarkMode ? '#a78bfa' : '#7c3aed';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            const k0_px = pad.left + (k0_nm / kRange) * plotW;
+            if (k0_px <= W - pad.right) {
+                ctx.setLineDash([3, 3]);
+                ctx.strokeStyle = isDarkMode ? '#a78bfa' : '#7c3aed';
+                ctx.beginPath();
+                ctx.moveTo(k0_px, botCenterY);
+                ctx.lineTo(k0_px, botCenterY - (subHeight * 0.45));
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            ctx.fillStyle = mutedText;
+            ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.fillText("-3.0 nm", pad.left, topY0 + 16);
+            ctx.fillText("0", pad.left + plotW / 2 - 3, topY0 + 16);
+            ctx.fillText("+3.0 nm", W - pad.right - 35, topY0 + 16);
+
+            ctx.fillText("0 rad/nm", pad.left, botCenterY + 16);
+            if (k0_px <= W - pad.right) {
+                ctx.fillText(`k\u2080=${k0_nm.toFixed(1)}`, Math.max(pad.left, k0_px - 18), botCenterY + 16);
+            }
+            ctx.fillText("40 rad/nm", W - pad.right - 45, botCenterY + 16);
+
+            if (isAnimating) {
+                simTime += 0.25e-16;
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>

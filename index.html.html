@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-STEM Dashboard</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            
+            --color-kuantum: #8b5cf6;
+            --color-molekul: #10b981;
+            --color-bina: #f59e0b;
+            --color-formula: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .brand {
+            padding: 24px 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-light);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand span {
+            color: var(--primary);
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .nav-btn {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 15px 20px;
+            color: var(--text-muted);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--text-light);
+            border-right: 4px solid var(--primary);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header (Mobile menu trigger) */
+        .mobile-header {
+            display: none;
+            padding: 15px 20px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Scrollable Container */
+        .scroll-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Home View Styles */
+        #home-view {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            margin-bottom: 40px;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Analytics Section (Factual, no fake stats) */
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .module-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .module-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .module-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .module-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Gemini Widget Section */
+        .gemini-widget {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+        }
+
+        .gemini-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .disclaimer {
+            font-size: 0.85rem;
+            color: #fbbf24;
+            margin-bottom: 20px;
+            background-color: rgba(251, 191, 36, 0.1);
+            padding: 10px;
+            border-left: 3px solid #fbbf24;
+            border-radius: 4px;
+        }
+
+        .prompt-form {
+            display: grid;
+            gap: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .prompt-result {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-box {
+            background-color: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            color: #a7f3d0;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+
+        /* Iframe View Styles */
+        #iframe-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .iframe-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .btn-close {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-close:hover {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        .iframe-container {
+            flex: 1;
+            width: 100%;
+            background-color: #fff; /* White background to ensure module compatibility */
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                height: 100%;
+                z-index: 1000;
+            }
+            .sidebar.open {
+                transform: translateX(260px);
+            }
+            .mobile-header {
+                display: flex;
+            }
+            .scroll-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="brand">
+            ⚛️ <span>X-STEM</span>
+        </div>
+        <ul class="nav-menu">
+            <li><button class="nav-btn active" onclick="showHome()" id="btn-home">🏠 Papan Pemuka</button></li>
+            <li><button class="nav-btn" onclick="loadModule('kuantum_simulasi.html', 'Gerbang Kuantum', this)">🌌 Gerbang Kuantum</button></li>
+            <li><button class="nav-btn" onclick="loadModule('molekul_visualizer.html', 'Gerbang Molekul', this)">🧪 Gerbang Molekul</button></li>
+            <li><button class="nav-btn" onclick="loadModule('pembinaan_struktur.html', 'Gerbang Pembinaan', this)">🏗️ Gerbang Pembinaan</button></li>
+            <li><button class="nav-btn" onclick="loadModule('formula_solver.html', 'Gerbang Formula', this)">📐 Gerbang Formula</button></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- Mobile Header -->
+        <header class="mobile-header">
+            <div class="brand">⚛️ <span>X-STEM</span></div>
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+        </header>
+
+        <!-- Home View -->
+        <div class="scroll-container" id="home-view">
+            <div class="hero">
+                <h1>Papan Pemuka STEM Bersepadu</h1>
+                <p>Selamat datang ke Gerbang Integrasi X-STEM. Platform ini menggabungkan empat modul pembelajaran Sains, Teknologi, Kejuruteraan, dan Matematik ke dalam satu persekitaran interaktif bagi memudahkan simulasi dan visualisasi pelajar Matrikulasi.</p>
+            </div>
+
+            <h2 class="section-title">Kandungan & Objektif Modul STEM</h2>
+            <div class="analytics-grid">
+                <div class="module-card" style="border-top: 3px solid var(--color-kuantum);">
+                    <div class="module-icon">🌌</div>
+                    <h3>Gerbang Kuantum</h3>
+                    <p><strong>Subjek:</strong> Fizik<br><strong>Fungsi:</strong> Menjalankan simulasi prinsip-prinsip mekanik kuantum dan visualisasi kebarangkalian zarah sub-atomik.</p>
+                </div>
+                <div class="module-card" style="border-top: 3px solid var(--color-molekul);">
+                    <div class="module-icon">🧪</div>
+                    <h3>Gerbang Molekul</h3>
+                    <p><strong>Subjek:</strong> Kimia<br><strong>Fungsi:</strong> Pemapar visual 3D untuk mengkaji struktur molekul, sudut ikatan, dan geometri kompaun kimia.</p>
+                </div>
+                <div class="module-card" style="border-top: 3px solid var(--color-bina);">
+                    <div class="module-icon">🏗️</div>
+                    <h3>Gerbang Pembinaan</h3>
+                    <p><strong>Subjek:</strong> Kejuruteraan<br><strong>Fungsi:</strong> Menganalisis daya, ketegangan bahan, dan reka bentuk struktur statik bagi perancangan kejuruteraan asas.</p>
+                </div>
+                <div class="module-card" style="border-top: 3px solid var(--color-formula);">
+                    <div class="module-icon">📐</div>
+                    <h3>Gerbang Formula</h3>
+                    <p><strong>Subjek:</strong> Matematik<br><strong>Fungsi:</strong> Kalkulator matematik lanjutan untuk menyelesaikan persamaan kompleks dan memplot graf fungsi secara dinamik.</p>
+                </div>
+            </div>
+
+            <h2 class="section-title">Penjana Promp AI (Gemini STEM Assistant)</h2>
+            <div class="gemini-widget">
+                <div class="gemini-badge">Penjana Promp</div>
+                <p class="disclaimer">
+                    <strong>PENTING:</strong> Widget ini adalah alat bantuan penjanaan promp dan <strong>tidak</strong> bersambung terus ke API Gemini (tiada API Key disimpan). Gunakan alat ini untuk membina soalan berstruktur yang boleh anda salin dan tampal ke platform Google Gemini sebenar untuk mendapatkan bantuan pembelajaran yang optimum.
+                </p>
+
+                <div class="prompt-form">
+                    <div class="form-group">
+                        <label for="ai-module">Pilih Konteks Modul:</label>
+                        <select id="ai-module" class="form-control">
+                            <option value="Fizik Kuantum">Fizik Kuantum (Simulasi Zarah)</option>
+                            <option value="Kimia">Kimia (Struktur Molekul)</option>
+                            <option value="Kejuruteraan Awam">Kejuruteraan (Struktur Statik)</option>
+                            <option value="Kalkulus/Algebra">Matematik (Penyelesaian Formula)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ai-topic">Soalan atau Topik Pembelajaran Anda:</label>
+                        <textarea id="ai-topic" class="form-control" placeholder="Contoh: Terangkan bagaimana teori hibridisasi sp3 berlaku pada molekul metana (CH4)."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="generatePrompt()">Jana Promp Berstruktur</button>
+                </div>
+
+                <div class="prompt-result" id="prompt-result-section">
+                    <label style="color: var(--text-light); margin-bottom: 8px; display: block;">Promp yang dijana (Salin teks ini):</label>
+                    <div class="result-box" id="generated-prompt"></div>
+                    <button class="btn-primary" style="background-color: var(--border);" onclick="copyPrompt()" id="copy-btn">Salin Promp</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Iframe View -->
+        <div id="iframe-view">
+            <div class="iframe-header">
+                <h2 id="current-module-title">Modul</h2>
+                <button class="btn-close" onclick="showHome()">✕ Tutup Modul</button>
+            </div>
+            <div class="iframe-container">
+                <iframe id="module-frame" src="" title="Modul Integrasi STEM"></iframe>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Navigation Logic
+        function resetNav() {
+            const btns = document.querySelectorAll('.nav-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+        }
+
+        function showHome() {
+            resetNav();
+            document.getElementById('btn-home').classList.add('active');
+            
+            document.getElementById('iframe-view').style.display = 'none';
+            document.getElementById('home-view').style.display = 'block';
+            
+            // Clear iframe source to prevent background audio/processing from existing modules
+            document.getElementById('module-frame').src = '';
+            
+            if(window.innerWidth <= 768) toggleMenu(); // close mobile menu
+        }
+
+        function loadModule(filename, title, btnElement) {
+            resetNav();
+            if(btnElement) btnElement.classList.add('active');
+            
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('iframe-view').style.display = 'flex';
+            
+            document.getElementById('current-module-title').innerText = title;
+            document.getElementById('module-frame').src = filename;
+
+            if(window.innerWidth <= 768) toggleMenu(); // close mobile menu
+        }
+
+        // Mobile Menu Logic
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Prompt Generator Logic
+        function generatePrompt() {
+            const moduleContext = document.getElementById('ai-module').value;
+            const topic = document.getElementById('ai-topic').value.trim();
+            
+            if (topic === "") {
+                alert("Sila masukkan soalan atau topik anda terlebih dahulu.");
+                return;
+            }
+
+            const promptText = `Anda bertindak sebagai seorang tenaga pengajar pakar dalam bidang ${moduleContext} untuk pelajar peringkat Matrikulasi / Pra-Universiti.\n\nSila bantu saya memahami konsep berikut berdasarkan pertanyaan di bawah:\n"${topic}"\n\nKeperluan jawapan:\n1. Terangkan konsep ini dengan bahasa yang mudah difahami tetapi mengekalkan ketepatan akademik.\n2. Berikan satu contoh praktikal atau jalan pengiraan langkah-demi-langkah jika berkaitan.\n3. Senaraikan konsep penting ini dalam bentuk 'bullet points' untuk rujukan nota saya.`;
+
+            document.getElementById('generated-prompt').innerText = promptText;
+            document.getElementById('prompt-result-section').style.display = 'block';
+            document.getElementById('copy-btn').innerText = "Salin Promp";
+        }
+
+        function copyPrompt() {
+            const textToCopy = document.getElementById('generated-prompt').innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const copyBtn = document.getElementById('copy-btn');
+                copyBtn.innerText = "✓ Berjaya Disalin!";
+                setTimeout(() => {
+                    copyBtn.innerText = "Salin Promp";
+                }, 2000);
+            }).catch(err => {
+                alert("Gagal menyalin teks. Sila salin secara manual.");
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerbang Formula - Modul Pengiraan & Graf</title>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary: #5b7c99;
+            --primary-hover: #486580;
+            --accent: #7da0b8;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --danger-bg: #fff5f5;
+            --danger-border: #feb2b2;
+            --danger-text: #c53030;
+            --radius: 16px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .formula-card {
+            background: #eef3f7;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-hover);
+            font-weight: bold;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.8rem 1.2rem;
+            border: none;
+            border-radius: 10px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        button:active {
+            transform: scale(0.95) translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .output-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            min-height: 50px;
+            word-break: break-all;
+        }
+
+        .error-box {
+            background: var(--danger-bg);
+            border-color: var(--danger-border);
+            color: var(--danger-text);
+        }
+
+        #plot-container {
+            width: 100%;
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Ensure 3D controls/modebar are always clearly visible */
+        .js-plotly-plot .plotly .modebar {
+            top: 5px !important;
+            right: 5px !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            border-radius: 8px !important;
+            padding: 4px !important;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>Kalkulator Saintifik</h2>
+        <div class="formula-card">
+            f(m, n) = m² / (n² - 2)
+        </div>
+
+        <div class="input-group">
+            <label for="valM">Nilai m:</label>
+            <input type="number" id="valM" step="any" value="2" placeholder="Masukkan nilai m">
+        </div>
+
+        <div class="input-group">
+            <label for="valN">Nilai n:</label>
+            <input type="number" id="valN" step="any" value="3" placeholder="Masukkan nilai n">
+        </div>
+
+        <div class="btn-group">
+            <button onclick="calculateSingle()">Kira f(m, n)</button>
+        </div>
+
+        <div id="result" class="output-box">
+            Tekan "Kira" untuk melihat hasil.
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Pemplot Graf Dinamik</h2>
+        <div class="btn-group" style="margin-top: 0; margin-bottom: 1rem;">
+            <button onclick="plotGraph('2d')">Plot Graf 2D (f vs n)</button>
+            <button onclick="plotGraph('3d')">Plot Graf 3D (f vs m, n)</button>
+        </div>
+        <div id="plot-container"></div>
+    </div>
+
+    <div class="card full-width">
+        <h2>Jadual Verifikasi Ralat (Error Handling Verification Table)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kes Ujian (Edge Cases)</th>
+                    <th>Input (m, n)</th>
+                    <th>Jangkaan Hasil</th>
+                    <th>Status Sistem / Respon Ralat</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Ketakselanjauran (n = √2)</td>
+                    <td>m = 1, n ≈ 1.41421356</td>
+                    <td>Ralat Pembahagian Sifar</td>
+                    <td><span style="color:red; font-weight:600;">Tak Terdefinisi (Domain Error)</span></td>
+                </tr>
+                <tr>
+                    <td>Ketakselanjauran Simetri (n = -√2)</td>
+                    <td>m = 2, n ≈ -1.41421356</td>
+                    <td>Ralat Pembahagian Sifar</td>
+                    <td><span style="color:red; font-weight:600;">Tak Terdefinisi (Domain Error)</span></td>
+                </tr>
+                <tr>
+                    <td>Pengangka Sifar (m = 0)</td>
+                    <td>m = 0, n = 5</td>
+                    <td>f = 0</td>
+                    <td><span style="color:green; font-weight:600;">0 (Sah)</span></td>
+                </tr>
+                <tr>
+                    <td>Titik Sifar Berganda (m = 0, n = √2)</td>
+                    <td>m = 0, n = 1.41421356</td>
+                    <td>Ralat (0/0 Beduaan)</td>
+                    <td><span style="color:red; font-weight:600;">Tak Terdefinisi (Domain Error)</span></td>
+                </tr>
+                <tr>
+                    <td>Nilai Input Besar (n &gt;&gt; √2)</td>
+                    <td>m = 100, n = 100</td>
+                    <td>f ≈ 1.0002</td>
+                    <td><span style="color:green; font-weight:600;">Diproses Sah</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Audio Context Setup for Smooth/Chill Synthesized Click Sound
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playChillSound() {
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        // Soft Sine Wave Sound
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, audioCtx.currentTime); 
+        osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.08);
+
+        // Envelope for a gentle click/pop
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    // Attach Sound Trigger to all buttons
+    document.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', playChillSound);
+    });
+
+    // Core Mathematical Function with Domain Verification
+    function evaluateFormula(m, n) {
+        const denominator = Math.pow(n, 2) - 2;
+        const tolerance = 1e-7; // Domain validation for n = sqrt(2) edge case
+
+        if (Math.abs(denominator) < tolerance) {
+            return { valid: false, message: "Ralat Domain: Nilai n berhampiran ±√2 menyebabkan pembahagian dengan sifar (Tak Terdefinisi)." };
+        }
+
+        const result = Math.pow(m, 2) / denominator;
+        return { valid: true, value: result };
+    }
+
+    // Calculation Function
+    function calculateSingle() {
+        const m = parseFloat(document.getElementById('valM').value);
+        const n = parseFloat(document.getElementById('valN').value);
+        const resBox = document.getElementById('result');
+
+        if (isNaN(m) || isNaN(n)) {
+            resBox.className = "output-box error-box";
+            resBox.innerHTML = "Sila masukkan nilai nombor yang sah untuk m dan n.";
+            return;
+        }
+
+        const outcome = evaluateFormula(m, n);
+
+        if (!outcome.valid) {
+            resBox.className = "output-box error-box";
+            resBox.innerHTML = `<strong>Ralat:</strong> ${outcome.message}`;
+        } else {
+            resBox.className = "output-box";
+            resBox.innerHTML = `<strong>Hasil Pengiraan:</strong> f(${m}, ${n}) = <strong>${outcome.value.toFixed(6)}</strong>`;
+        }
+    }
+
+    // Graph Plotting Function (2D / 3D)
+    function plotGraph(type) {
+        const container = document.getElementById('plot-container');
+
+        if (type === '2d') {
+            const currentM = parseFloat(document.getElementById('valM').value) || 2;
+            let nValues = [];
+            let fValues = [];
+
+            // Range n from -5 to 5 with discontinuity gap at +/- sqrt(2)
+            for (let n = -5; n <= 5; n += 0.05) {
+                const outcome = evaluateFormula(currentM, n);
+                nValues.push(n);
+                fValues.push(outcome.valid ? outcome.value : null);
+            }
+
+            const trace = {
+                x: nValues,
+                y: fValues,
+                mode: 'lines',
+                name: `m = ${currentM}`,
+                line: { color: '#5b7c99', width: 2.5 }
+            };
+
+            const layout = {
+                title: `Graf 2D: f vs n (apabila m = ${currentM})`,
+                xaxis: { title: 'Pemboleh ubah (n)' },
+                yaxis: { title: 'Fungsi f(m, n)', range: [-20, 20] },
+                margin: { t: 40, r: 20, l: 40, b: 40 }
+            };
+
+            // Plotly Configuration enabling Zoom & Pan tools for 2D plot
+            const config = {
+                responsive: true,
+                scrollZoom: true,
+                displayModeBar: true,
+                modeBarButtonsToAdd: ['zoom2d', 'pan2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d']
+            };
+
+            Plotly.newPlot(container, [trace], layout, config);
+
+        } else if (type === '3d') {
+            let mRange = [];
+            let nRange = [];
+            let zMatrix = [];
+
+            for (let i = -4; i <= 4; i += 0.25) mRange.push(i);
+            for (let j = -4; j <= 4; j += 0.25) nRange.push(j);
+
+            for (let j = 0; j < nRange.length; j++) {
+                let row = [];
+                for (let i = 0; i < mRange.length; i++) {
+                    const outcome = evaluateFormula(mRange[i], nRange[j]);
+                    if (outcome.valid && Math.abs(outcome.value) < 30) {
+                        row.push(outcome.value);
+                    } else {
+                        row.push(null); // Filter asymptotic visual spikes
+                    }
+                }
+                zMatrix.push(row);
+            }
+
+            const data = [{
+                z: zMatrix,
+                x: mRange,
+                y: nRange,
+                type: 'surface',
+                colorscale: 'Blues'
+            }];
+
+            const layout = {
+                title: 'Graf 3D Surface: f(m, n)',
+                scene: {
+                    xaxis: { title: 'm' },
+                    yaxis: { title: 'n' },
+                    zaxis: { title: 'f(m,n)', range: [-20, 20] }
+                },
+                margin: { t: 50, r: 20, l: 20, b: 20 }
+            };
+
+            // Enhanced 3D Plotly Toolbar Arrangement (Zoom, Orbit/Turntable, Snap Picture, Reset)
+            const config3d = {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false,
+                modeBarButtonsToAdd: [
+                    'toImage',        // Snap Picture
+                    'orbitRotation',  // Turntable/Orbit
+                    'tableRotation',  // Table Rotation
+                    'resetCameraDefault3d', // Reset View
+                    'zoom3d',         // Zoom 3D
+                    'pan3d'           // Pan 3D
+                ]
+            };
+
+            Plotly.newPlot(container, data, layout, config3d);
+        }
+    }
+
+    // Initial 2D Plot on Page Load
+    window.onload = () => {
+        plotGraph('2d');
+    };
+</script>
+
+</body>
+</html>
